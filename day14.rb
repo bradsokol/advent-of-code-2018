@@ -5,34 +5,64 @@
 require 'pp'
 require 'pry'
 
-def iterate(recipes, elf1, elf2)
-  score1 = recipes[elf1].to_i
-  score2 = recipes[elf2].to_i
-  sum = score1 + score2
-  if sum > 9
-    recipes += "#{sum / 10}#{sum % 10}"
-  else
-    recipes += "#{sum}"
+class Recipe
+  attr_reader :index, :score
+  attr_accessor :next, :previous
+
+  def initialize(score, index)
+    @index = index
+    @score = score
+    @next = nil
+    @previous = nil
   end
-  [recipes, (elf1 + score1 + 1) % recipes.length, (elf2 + score2 + 1) % recipes.length]
+end
+
+def next_recipe(head, current, steps)
+  steps.times do
+    unless current.next.nil?
+      current = current.next
+    else
+      current = head
+    end
+  end
+  current
 end
 
 input = '260321'
-recipes = '37'
-elf1 = 0
-elf2 = 1
 
-while recipes.index(input).nil?
-  score1 = recipes[elf1].to_i
-  score2 = recipes[elf2].to_i
+head = Recipe.new(3, 0)
+tail = Recipe.new(7, 1)
+head.next = tail
+tail.previous = head
+elf1_recipe = head
+elf2_recipe = tail
+last_recipes = ''
+
+while last_recipes.index(input).nil?
+  score1 = elf1_recipe.score
+  score2 = elf2_recipe.score
   sum = score1 + score2
   if sum > 9
-    recipes += "#{sum / 10}#{sum % 10}"
+    tail.next = Recipe.new(sum / 10, tail.index + 1)
+    tail.next.next = Recipe.new(sum % 10, tail.index + 2)
+    tail.next.previous = tail
+    tail.next.next.previous = tail.next
+    tail = tail.next.next
+    last_recipes += tail.previous.score.to_s
   else
-    recipes += "#{sum}"
+    tail.next = Recipe.new(sum, tail.index + 1)
+    tail.next.previous = tail
+    tail = tail.next
   end
-  elf1 = (elf1 + score1 + 1) % recipes.length
-  elf2 = (elf2 + score2 + 1) % recipes.length
+  last_recipes += tail.score.to_s
+  last_recipes = last_recipes[-(input.length + 1)..-1] if last_recipes.length > input.length
+
+  elf1_recipe = next_recipe(head, elf1_recipe, score1 + 1)
+  elf2_recipe = next_recipe(head, elf2_recipe, score2 + 1)
 end
 
-pp recipes.index(input)
+pos = tail.previous.previous.previous.previous.previous.previous
+until pos.nil?
+  puts "#{pos.score}, #{pos.index}"
+  pos = pos.next
+end
