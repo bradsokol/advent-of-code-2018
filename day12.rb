@@ -30,8 +30,9 @@ def surrounding_state(pots, i)
   end
 end
 
-file = File.open('day12-sample.txt')
+file = File.open('day12.txt')
 first = last = nil
+pots = []
 file.readline.match(/initial state: (.+)$/).captures[0].chars.each_with_index do |c, i|
   if c == '#'
     new = PottedPlant.new(i, last, nil)
@@ -39,6 +40,7 @@ file.readline.match(/initial state: (.+)$/).captures[0].chars.each_with_index do
     last = new
     first = new if first.nil?
   end
+  pots << c
 end
 file.readline
 
