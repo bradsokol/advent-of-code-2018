@@ -30,8 +30,15 @@ def surrounding_state(pots, i)
   end
 end
 
-file = File.open('day12-sample.txt')
+def sum_plants(pots, generation)
+  sum = 0
+  pots.each_with_index { |pot, i| sum += (i - (5 * generation)) if pot == '#' }
+  sum
+end
+
+file = File.open('day12.txt')
 first = last = nil
+pots = []
 file.readline.match(/initial state: (.+)$/).captures[0].chars.each_with_index do |c, i|
   if c == '#'
     new = PottedPlant.new(i, last, nil)
@@ -39,6 +46,7 @@ file.readline.match(/initial state: (.+)$/).captures[0].chars.each_with_index do
     last = new
     first = new if first.nil?
   end
+  pots << c
 end
 file.readline
 
@@ -48,17 +56,21 @@ file.readlines.each do |line|
   transitions[state] = new
 end
 
+sums = [sum_plants(pots, 0)]
+diffs = [nil] * 10
 buffer = '.....'.chars
 new_pots = pots.clone
-20.times do |generation|
+last_generation = 1.step do |generation|
   pots = buffer + new_pots + buffer
   new_pots = pots.clone
   pots.each_with_index do |pot, i|
     new_pots[i] = transitions[surrounding_state(pots, i)]
   end
-  # puts new_pots[(generation * 5 - 3)..(-1 - (generation * 5 - 3))].join
+  sums[generation] = sum_plants(new_pots, generation)
+  diffs.shift
+  diffs << sums[generation] - sums[generation - 1]
+  break generation if diffs.uniq.size == 1
 end
 
-sum = 0
-new_pots.each_with_index { |pot, i| sum += (i - 100) if pot == '#' }
-pp sum
+pp sums[20]
+pp sums[last_generation] + diffs[0] * (50_000_000_000 - last_generation)

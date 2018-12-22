@@ -198,10 +198,62 @@ def choose_step(unit, square)
     .first
 end
 
+def adjacent_enemies(unit)
+  enemy_species = unit.species == :elf ? :goblin : :elf
+  enemies = []
+  if unit.y > 0 && $cave[unit.y - 1][unit.x].is_a?(Integer)
+    adjacent_unit = $units.find { |u| u.index == $cave[unit.y - 1][unit.x] }
+    enemies << adjacent_unit if adjacent_unit.species == enemy_species
+  end
+  if unit.x < $cave[0].length - 2 && $cave[unit.y][unit.x + 1].is_a?(Integer)
+    adjacent_unit = $units.find { |u| u.index == $cave[unit.y][unit.x + 1] }
+    enemies << adjacent_unit if adjacent_unit.species == enemy_species
+  end
+  if unit.y < $cave.length - 2 && $cave[unit.y + 1][unit.x].is_a?(Integer)
+    adjacent_unit = $units.find { |u| u.index == $cave[unit.y + 1][unit.x] }
+    enemies << adjacent_unit if adjacent_unit.species == enemy_species
+  end
+  if unit.x > 0 && $cave[unit.y][unit.x - 1].is_a?(Integer)
+    adjacent_unit = $units.find { |u| u.index == $cave[unit.y][unit.x - 1] }
+    enemies << adjacent_unit if adjacent_unit.species == enemy_species
+  end
+  enemies
+end
+
+
+def choose_square(unit)
+  closest_targets = targets(unit).each_with_object(Hash.new { |h, k| h[k] = [] }) do |target, distances|
+    unoccupied_positions(target.coordinate) do |in_range|
+      distance = shortest_distance(unit.coordinate, in_range)
+      distances[distance] << in_range unless distance.nil?
+    end
+  end
+  closest_targets[closest_targets.keys.min].sort do |a, b|
+    a.y == b.y ? a.x <=> b.x : a.y <=> b.y
+  end.first
+end
+
+def choose_step(unit, square)
+  paths = []
+  minimum_distance = 999_999
+  unoccupied_positions(unit.coordinate) do |position|
+    distance = shortest_distance(position, square)
+    next if distance.nil?
+    minimum_distance = [minimum_distance, distance].min
+    paths << [position, distance]
+  end
+
+  paths
+    .select { |p| p[1] == minimum_distance }
+    .map { |p| p[0] }
+    .sort { |a, b| a.y == b.y ? a.x <=> b.x : a.y <=> b.y }
+    .first
+end
+
 $cave = []
 $units = []
 e = g = 1
-File.open('day15.txt').readlines.each_with_index do |line, j|
+File.open('day15-sample9.txt').readlines.each_with_index do |line, j|
   $cave[j] = line.chars
   $cave[j].each_with_index do |position, i|
     if position == 'E'
