@@ -52,18 +52,36 @@ current_room = Room.new(0, 0)
 my_location = current_room
 x = y = 0
 $rooms[y][x] = current_room
-branches = []
 
 regex = File.open('day20.txt').readline
 # regex = '^WNE$'
 # regex = '^ENWWW(NEEE|SSE(EE|N))$'
 # regex = '^ENNWSWW(NEWS|)SSSEEN(WNSE|)EE(SWEN|)NNN$'
 # regex = '^ESSWWN(E|NNENN(EESS(WNSE|)SSS|WWWSSSSE(SW|NNNE)))$'
-regex.chars.each do |char|
-  next if char == '^'
-  break if char == '$'
+i = 1
+forks = []
+continuations = []
+dollars = 0
+loop do
+  char = regex[i]
+  if char == '$'
+    dollars += 1
+    puts "#{dollars} #{continuations.length}"
+
+    break if continuations.empty?
+    current_room, i, forks = continuations.pop
+    x = 1
+    until x == 0
+      x -= 1 if regex[i] == ')'
+      x += 1 if regex[i] == '('
+      i += 1
+    end
+    char = regex[i]
+  end
 
   case char
+  when '$'
+    next
   when 'N'
     y += 1
     current_room = add_room(x, y, current_room, char)
@@ -77,16 +95,17 @@ regex.chars.each do |char|
     x -= 1
     current_room = add_room(x, y, current_room, char)
   when '('
-    branches.push(current_room)
+    forks.push(current_room)
   when ')'
-    current_room = branches.pop
-    x = current_room.x
-    y = current_room.y
+    forks.pop
+    continuations.pop if regex[i - 1] == '|'
   when '|'
-    current_room = branches.last
+    continuations.push([current_room, i, forks.clone])
+    current_room = forks.last
     x = current_room.x
     y = current_room.y
   end
+  i += 1
 end
 
 def find_path(current_room, distance)
