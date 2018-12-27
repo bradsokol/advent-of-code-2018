@@ -3,8 +3,8 @@
 require 'pry'
 
 class Group
-  attr_reader :damage, :damage_type, :initiative, :type, :weaknesses, :immunities, :index
-  attr_accessor :hit_points, :units
+  attr_reader :damage_type, :initiative, :type, :weaknesses, :immunities, :index
+  attr_accessor :hit_points, :units, :damage
 
   def initialize(type, index, units, hit_points, damage, damage_type, initiative, weaknesses = [], immunities = [])
     @type = type
@@ -102,6 +102,40 @@ def print_groups(groups)
   puts ''
 end
 
+def battle(groups)
+  last_sum = 0
+  until groups.map(&:type).uniq.count == 1
+    # print_groups(groups)
+
+    targets = {}
+    sort_for_target_selection(groups).each do |group|
+      selected_targets = select_targets(group, groups.select { |g| g.type != group.type })
+      while !selected_targets.empty? && targets.values.include?(selected_targets.first) do
+        selected_targets.delete_at(0)
+      end
+      unless selected_targets.empty?
+        targets[group] = selected_targets.first
+      end
+    end
+    # puts ''
+
+    attacking_groups = targets.keys.sort { |a, b| b.initiative <=> a.initiative }
+    attacking_groups.each do |attacking_group|
+      next unless attacking_group.units > 0
+      target = targets[attacking_group]
+      attacking_group.attack(target)
+    end
+    # binding.pry
+
+    groups.delete_if { |group| group.units < 1 }
+    sum = groups.sum(&:units)
+    return nil if sum == last_sum
+    last_sum = sum
+    # puts ''
+  end
+  groups
+end
+
 file = File.open('day24.txt')
 file.readline
 groups = []
@@ -120,31 +154,35 @@ file.readlines.each do |line|
   i += 1
 end
 
-until groups.map(&:type).uniq.count == 1
-  # print_groups(groups)
+copy = Marshal.load(Marshal.dump(groups))
+p battle(copy).map(&:units).sum
 
-  targets = {}
-  sort_for_target_selection(groups).each do |group|
-    selected_targets = select_targets(group, groups.select { |g| g.type != group.type })
-    while !selected_targets.empty? && targets.values.include?(selected_targets.first) do
-      selected_targets.delete_at(0)
+boost = 10_000_000
+boost = 29
+# last_winner = :immune_system
+loop do
+  # last_boost = boost
+  # boost = boost / 2
+  # last_winner = winner
+
+  boosted = Marshal.load(Marshal.dump(groups))
+  boosted.each { |g| g.damage += boost if g.type == :immune_system }
+  result = battle(boosted)
+  winner = result.map(&:type).uniq.first
+  binding.pry
+
+  if result
+    diff = boost / 2
+    break if diff == 0
+    winner = result.map(&:type).uniq.first
+    puts "#{winner} #{boost}"
+    if winner == :immune_system
+      boost -= diff
+    else
+      boost += diff
     end
-    unless selected_targets.empty?
-      targets[group] = selected_targets.first
-    end
+  else
+    boost -= 1
   end
-  # puts ''
-
-  attacking_groups = targets.keys.sort { |a, b| b.initiative <=> a.initiative }
-  attacking_groups.each do |attacking_group|
-    next unless attacking_group.units > 0
-    target = targets[attacking_group]
-    attacking_group.attack(target)
-  end
-  # binding.pry
-
-  groups.delete_if { |group| group.units < 1 }
-  # puts ''
 end
-
-p groups.map(&:units).sum
+p boost
