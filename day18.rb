@@ -1,6 +1,8 @@
 #! /usr/bin/env ruby
 
 require 'pry'
+require 'digest'
+require 'set'
 
 def count_adjacent(x, y, char)
   count = 0
@@ -20,9 +22,23 @@ def count_adjacent(x, y, char)
 end
 
 $forest = File.open('day18.txt').readlines.map(&:strip).map(&:chars)
+$history = Set.new
 
-10.times do
+first_repeat = nil
+1_000_000_000.times do |i|
+  break if i == 468
   $previous = $forest.map { |row| row.dup } 
+  digest = Digest::MD5.hexdigest($previous.map(&:join).join)
+  if first_repeat.nil?
+    if $history.include?(digest)
+      p i
+      first_repeat = digest
+    end
+  elsif digest == first_repeat
+    p i
+    break
+  end
+  $history << digest
 
   $previous.each_with_index do |row, y|
     row.each_with_index do |char, x|
