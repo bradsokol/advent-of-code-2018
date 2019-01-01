@@ -1,0 +1,32 @@
+#ip 1
+seti 123 0 4         #00: r4 = 123
+bani 4 456 4         #01: r4 = r4 & 456
+eqri 4 72 4          #02: r4 = r4 == 72 ? 1 : 0   If r4 == 72
+addr 4 1 1           #03: r1 = r4 + r1            jump to line 5
+seti 0 0 1           #04: r1 = 0                  else jump to line 1
+seti 0 1 4           #05: r4 = 0
+bori 4 65536 3       #06: r3 = r4 | 65536
+seti 3730679 4 4     #07: r4 = 3_730_679
+bani 3 255 5         #08: r5 = r3 & 255
+addr 4 5 4           #09: r4 = r4 + r5
+bani 4 16777215 4    #10: r4 = r4 & 16_777_215
+muli 4 65899 4       #11: r4 = r4 * 65_899
+bani 4 16777215 4    #12: r4 = r4 & 16_777_215
+gtir 256 3 5         #13: r5 = 256 > r3 ? 1 : 0   If 256 > r3 (if r3 < 256)
+addr 5 1 1           #14: r1 = r5 + r1            jump to line 16
+addi 1 1 1           #15: r1 = r1 + 1             else jump to line 17
+seti 27 1 1          #16: r1 = 27                 Jump to line 28
+seti 0 0 5           #17: r5 = 0
+addi 5 1 2           #18: r2 = r5 + 1
+muli 2 256 2         #19: r2 = r2 * 256
+gtrr 2 3 2           #20: r2 = r2 > r3 ? 1 : 0    If r2 > r3
+addr 2 1 1           #21: r1 = r2 + r1            jump to line 23
+addi 1 1 1           #22: r1 = r1 + 1             else jump to line 24
+seti 25 1 1          #23: r1 = 25                 Jump to line 25
+addi 5 1 5           #24: r5 = r5 + 1
+seti 17 1 1          #25: r1 = 17                 Jump to line 18
+setr 5 2 3           #26: r3 = r5
+seti 7 6 1           #27: r1 = 7                  Jump to line 8
+eqrr 4 0 5           #28: r5 = r4 == r0 ? 1 : 0   If r4 == r0
+addr 5 1 1           #29: r1 = r5 + r1            HALT
+seti 5 1 1           #30: r1 = 5                  else jump to line 6
