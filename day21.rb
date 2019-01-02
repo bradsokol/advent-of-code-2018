@@ -50,7 +50,8 @@ def run(r0)
   result = loop do
     # 6.times { |i| printf "%8d ", $registers[i] }
     # puts ''
-    p $registers[4] if ip == 28
+    # p $registers[4] if ip == 28
+    $halting_values.add($registers[4])
 
     $registers[$ip_register] = ip
 
@@ -68,9 +69,31 @@ def run(r0)
   result
 end
 
+$halting_values = Set.new
+
 1.times do |i|
   result = run(256)
   unless result.nil?
     p "i: #{i} result: #{result}"
   end
 end
+
+# $halting_values.to_a.sort.each { |v| p v }
+
+largest = 0
+h = 0
+$halting_values.to_a.sort.each do |v|
+  next unless v < 12_685_827
+  count = run(v)
+  if !count.nil?
+    puts "#{v}: #{count}"
+    if count > largest
+      largest = count
+      h = v
+    end
+  end
+end
+p h
+
+# 16_206_907 is too high
+# 12_685_827 is too high
